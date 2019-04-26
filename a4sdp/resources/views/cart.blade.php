@@ -1,9 +1,58 @@
-@extends('layout')
+<!DOCTYPE html>
+<html>
+<head>
  
-@section('title', 'Cart')
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
  
-@section('content')
+    <title>@yield('title')</title>
  
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="{{ asset('css/style.css') }}">
+ 
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+ 
+</head>
+<body>
+ 
+<div class="container">
+    
+        <div class="row">
+                <div class="col-lg-12 col-sm-12 col-12 main-section">
+                    <div class="dropdown">
+                        <button type="button" class="btn btn-info" data-toggle="dropdown">
+                            <i class="fa fa-shopping-cart" aria-hidden="true"></i> Cart <span class="badge badge-pill badge-danger">{{ session('cart')!=null?count(session('cart')):0 }}</span>
+                        </button>
+                        <div class="dropdown-menu">
+                            <div class="row total-header-section">
+                                <div class="col-lg-6 col-sm-6 col-6">
+                                    <i class="fa fa-shopping-cart" aria-hidden="true"></i> <span class="badge badge-pill badge-danger">{{ session('cart')!=null?count(session('cart')):0 }}</span>
+                                </div>
+         
+                                <?php $total = 0 ?> @if(session('cart') != null) @foreach(session('cart') as $id => $details) 
+                                <?php $total += $details['price'] * $details['quantity'] ?>
+                                 @endforeach 
+                                 @endif 
+         
+                                <div class="col-lg-6 col-sm-6 col-6 total-section text-right">
+                                    <p>Total: <span class="text-info">$ {{ $total }}</span></p>
+                                </div>
+                            </div>
+         
+                            @if(session('cart') != null) @foreach(session('cart') as $id => $details) {{ $details['name'] }} ${{ $details['price'] }} Quantity:{{ $details['quantity'] }} @endforeach @endif
+                            <div class="row">
+                                <div class="col-lg-12 col-sm-12 col-12 text-center checkout">
+                                    <a href="{{ url('cart') }}" class="btn btn-primary btn-block">View all</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="container page">
     <table id="cart" class="table table-hover table-condensed">
         <thead>
         <tr>
@@ -51,51 +100,50 @@
             <td class="text-center"><strong>Total {{ $total }}</strong></td>
         </tr>
         <tr>
-            <td><a href="{{ url('/') }}" class="btn btn-warning"><i class="fa fa-angle-left"></i> Continue Shopping</a></td>
+            <td><a href="{{ url('/products') }}" class="btn btn-warning"><i class="fa fa-angle-left"></i> Continue Shopping</a></td>
             <td colspan="2" class="hidden-xs"></td>
             <td class="hidden-xs text-center"><strong>Total ${{ $total }}</strong></td>
         </tr>
         </tfoot>
     </table>
+</div>
  
-@endsection
-@section('scripts')
+
+<script type="text/javascript">
  
- 
-    <script type="text/javascript">
- 
-        $(".update-cart").click(function (e) {
-           e.preventDefault();
- 
-           var ele = $(this);
- 
+    $(".update-cart").click(function (e) {
+       e.preventDefault();
+
+       var ele = $(this);
+
+        $.ajax({
+           url: '{{ url('update-cart') }}',
+           method: "patch",
+           data: {_token: '{{ csrf_token() }}', id: ele.attr("data-id"), quantity: ele.parents("tr").find(".quantity").val()},
+           success: function (response) {
+               window.location.reload();
+           }
+        });
+    });
+
+    $(".remove-from-cart").click(function (e) {
+        e.preventDefault();
+
+        var ele = $(this);
+
+        if(confirm("Are you sure")) {
             $.ajax({
-               url: '{{ url('update-cart') }}',
-               method: "patch",
-               data: {_token: '{{ csrf_token() }}', id: ele.attr("data-id"), quantity: ele.parents("tr").find(".quantity").val()},
-               success: function (response) {
-                   window.location.reload();
-               }
+                url: '{{ url('remove-from-cart') }}',
+                method: "DELETE",
+                data: {_token: '{{ csrf_token() }}', id: ele.attr("data-id")},
+                success: function (response) {
+                    window.location.reload();
+                }
             });
-        });
+        }
+    });
+
+</script>
  
-        $(".remove-from-cart").click(function (e) {
-            e.preventDefault();
- 
-            var ele = $(this);
- 
-            if(confirm("Are you sure")) {
-                $.ajax({
-                    url: '{{ url('remove-from-cart') }}',
-                    method: "DELETE",
-                    data: {_token: '{{ csrf_token() }}', id: ele.attr("data-id")},
-                    success: function (response) {
-                        window.location.reload();
-                    }
-                });
-            }
-        });
- 
-    </script>
- 
-@endsection
+</body>
+</html>
